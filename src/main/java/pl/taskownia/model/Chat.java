@@ -2,7 +2,6 @@ package pl.taskownia.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import pl.taskownia.serializer.ChatSerializer;
-import pl.taskownia.serializer.UserSerializer;
 
 import javax.persistence.*;
 import java.util.Date;
