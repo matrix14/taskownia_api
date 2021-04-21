@@ -1,18 +1,14 @@
 package pl.taskownia.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.taskownia.model.Chat;
-import pl.taskownia.model.User;
 import pl.taskownia.service.ChatService;
-import pl.taskownia.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 
 @RestController
@@ -28,7 +24,7 @@ public class ChatController {
     }
 
     @PostMapping("/sent")
-    public String sentMessage(HttpServletRequest r, @RequestParam String msg) {
+    public ResponseEntity<?> sentMessage(HttpServletRequest r, @RequestParam String msg) {
         return chatService.sent(r,msg);
     }
 }

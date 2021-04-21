@@ -30,7 +30,7 @@ public class User {
     @ElementCollection(fetch = FetchType.EAGER) //Required by Spring Security
     List<Role> roles;
     @Column(nullable = false)
-    private Status status;
+    private MakerStatus makerStatus;
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "personal_data_id", referencedColumnName = "id_pers_data")
     @NotNull
@@ -49,19 +49,25 @@ public class User {
     private List<Project> projectsAuthor = new ArrayList<>();
     @OneToMany(mappedBy = "maker")
     private List<Project> projectsMaker = new ArrayList<>();
+    @ManyToMany
+    @JoinTable(
+            name = "project_interest",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "project_id"))
+    private List<Project> projectInterests = new ArrayList<>();
     @Column(nullable = false)
     @Temporal(value= TemporalType.TIMESTAMP)
     private Date created_at;
     @Column(nullable = false)
     @Temporal(value= TemporalType.TIMESTAMP)
     private Date updated_at;
-
+//TODO: add relation for projectInterest
 //    private enum AppRole {
 //        AUTHOR, MAKER
 //    }
 
-    public enum Status { //TODO: add new states - for Zbychu
-        STATE1, STATE2, STATE3
+    public enum MakerStatus {
+        NOT_READY, NEUTRAL, READY
     }
 
     public User(){}
@@ -114,12 +120,20 @@ public class User {
         this.roles = roles;
     }
 
-    public Status getStatus() {
-        return status;
+    public MakerStatus getMakerStatus() {
+        return makerStatus;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void setMakerStatus(MakerStatus makerStatus) {
+        this.makerStatus = makerStatus;
+    }
+
+    public List<Chat> getChat() {
+        return chat;
+    }
+
+    public void setChat(List<Chat> chat) {
+        this.chat = chat;
     }
 
     public UserPersonalData getPersonalData() {

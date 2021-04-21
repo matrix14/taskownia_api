@@ -2,6 +2,7 @@ package pl.taskownia.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.taskownia.model.Project;
 import pl.taskownia.model.User;
@@ -24,12 +25,12 @@ public class ProjectController {
     }
 
     @PostMapping(path = "/new", produces = MediaType.APPLICATION_JSON_VALUE)
-    public String saveProject(HttpServletRequest r, @RequestBody Project project){
+    public ResponseEntity<?> saveProject(HttpServletRequest r, @RequestBody Project project){
         return projectService.newProject(r, project);
     }
 
     @PostMapping(path = "/take", produces = MediaType.APPLICATION_JSON_VALUE)
-    public String saveProject(@RequestParam Long projId, HttpServletRequest r){ return projectService.takeProject(r, projId); }
+    public ResponseEntity<?> saveProject(@RequestParam Long projId, HttpServletRequest r){ return projectService.takeProject(r, projId); }
 
     @GetMapping(path = "/my-author", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Project> getMyProjectsAuthor(HttpServletRequest r){

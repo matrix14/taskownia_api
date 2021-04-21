@@ -4,11 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import pl.taskownia.model.Chat;
 import pl.taskownia.model.Project;
 import pl.taskownia.model.User;
-import pl.taskownia.repository.ChatRepository;
 import pl.taskownia.repository.ProjectRepository;
 import pl.taskownia.repository.UserRepository;
 import pl.taskownia.security.JwtTokenProvider;
@@ -16,7 +16,6 @@ import pl.taskownia.security.JwtTokenProvider;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ProjectService {
@@ -30,7 +29,7 @@ public class ProjectService {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
-    public String newProject(HttpServletRequest r, Project projectRequest) {
+    public ResponseEntity<?> newProject(HttpServletRequest r, Project projectRequest) {
         User u = userRepository.findByUsername(jwtTokenProvider.getLogin(jwtTokenProvider.resolveToken(r)));
 
         projectRequest.setAuthor(u);
@@ -38,24 +37,24 @@ public class ProjectService {
         projectRequest.setCreated_at(new Date(System.currentTimeMillis()));
         projectRequest.setUpdated_at(new Date(System.currentTimeMillis()));
         projectRepository.save(projectRequest);
-        return "Ok";
+        return ResponseEntity.ok().build();
     }
 
-    public String takeProject(HttpServletRequest r, Long projId) {
+    public ResponseEntity<?> takeProject(HttpServletRequest r, Long projId) {
         User u = userRepository.findByUsername(jwtTokenProvider.getLogin(jwtTokenProvider.resolveToken(r)));
         Project p = projectRepository.findById(projId).orElse(null);
         if(p == null) {
-            return "Project id is wrong!";
+            return new ResponseEntity<>("Project id is wrong!", HttpStatus.CONFLICT);
         }
         if(p.getMaker()!=null) {
-            return "Project already taken!";
+            return new ResponseEntity<>("Project already taken!", HttpStatus.CONFLICT);
         }
         if(p.getAuthor().getId()==u.getId()) {
-            return "Author can't take project!";
+            return new ResponseEntity<>("Author can't take project!", HttpStatus.CONFLICT);
         }
         p.setMaker(u);
         projectRepository.save(p);
-        return "Ok";
+        return ResponseEntity.ok().build();
     }
 
     public List<Project> getAllProjects() { //TODO: get max 10-20-30 projects, not all

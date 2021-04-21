@@ -1,9 +1,12 @@
 package pl.taskownia.data;
 
+import pl.taskownia.model.User;
+
 import java.util.Date;
 
 public class UserDataUpdate {
     private String email;
+    private User.MakerStatus makerStatus;
     private String firstName;
     private String lastName;
     private String phone;
@@ -23,6 +26,14 @@ public class UserDataUpdate {
 
     public String getFirstName() {
         return firstName;
+    }
+
+    public User.MakerStatus getMakerStatus() {
+        return makerStatus;
+    }
+
+    public void setMakerStatus(User.MakerStatus makerStatus) {
+        this.makerStatus = makerStatus;
     }
 
     public void setFirstName(String firstName) {
