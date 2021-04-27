@@ -15,12 +15,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/user")
 public class UserController {
-    @Autowired
+
     private UserService userService;
+
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestParam String username,
-                        @RequestParam String password) {
+                                   @RequestParam String password) {
         return userService.login(username, password);
     }
 
@@ -31,19 +36,19 @@ public class UserController {
 
     @PostMapping("/change-pwd")
     public ResponseEntity<?> chgPwd(HttpServletRequest r, @RequestParam String oldPass,
-                         @RequestParam String newPass) {
+                                    @RequestParam String newPass) {
         return userService.chgPass(r, oldPass, newPass);
     }
 
     @PostMapping("/change-pwd-admin")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> chgPwdAdm(HttpServletRequest r, @RequestParam String username,
-                            @RequestParam String newPass) {
+                                       @RequestParam String newPass) {
         return userService.chgPassAdmin(r, username, newPass);
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')") //TODO: uncomment, but not working properly with ADMIN
+//    @PreAuthorize("hasAuthority('ROLE_ADMIN')") //TODO: uncomment, but not working properly with ADMIN
     public List<User> showAll() {
         return userService.showAll();
     }
@@ -53,9 +58,14 @@ public class UserController {
         return userService.whoami(r);
     }
 
-    @GetMapping("/view/{id}}") //FIXME: check if works
+    @GetMapping("/view/{id}") //FIXME: check if works
     public User getOtherUserData(@PathVariable Long id) {
         return userService.getOtherUserData(id);
+    }
+
+    @GetMapping("/view")
+    public User getOtherUserDataByUsername(@RequestParam String username) {
+        return userService.getOtherUserDataByUsername(username);
     }
 
     /*
@@ -74,8 +84,8 @@ public class UserController {
     }
 
     @PostMapping("/inuse")
-    public ResponseEntity<?> isInUse(@RequestParam String username,
-                          @RequestParam String email) {
-        return userService.isInUse(username,email);
+    public ResponseEntity<?> isInUse(@RequestParam(required = false) String username,
+                                     @RequestParam(required = false) String email) {
+        return userService.isInUse(username, email);
     }
 }

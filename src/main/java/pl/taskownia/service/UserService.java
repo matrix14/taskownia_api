@@ -38,11 +38,11 @@ public class UserService {
     public ResponseEntity<?> login(String uname, String pass) {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(uname, pass));
-            return ResponseEntity.ok(jwtTokenProvider.createToken(userRepository.findByUsername(uname).getId(),
-                    uname, userRepository.findByUsername((uname)).getRoles()));
+            String token = jwtTokenProvider.createToken(userRepository.findByUsername(uname).getId(),
+                    uname, userRepository.findByUsername((uname)).getRoles());
+            return ResponseEntity.ok(token);
         } catch (AuthenticationException ex) {
             return new ResponseEntity<>("Invalid login or password!", HttpStatus.CONFLICT);
-//            throw new CustomException("Invalid login credentials!", HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
 
@@ -119,28 +119,40 @@ public class UserService {
         return userRepository.findById(id).orElse(null);
     }
 
+    public User getOtherUserDataByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
     public User updateData(HttpServletRequest request, UserDataUpdate userDataUpdate) {
         User u = userRepository.findByUsername(jwtTokenProvider.getLogin(jwtTokenProvider.resolveToken(request)));
         UserAddress userAddress = u.getAddress();
         UserPersonalData userPersonalData = u.getPersonalData();
 
-        if(u.getRoles().contains(Role.ROLE_CLIENT_AUTHOR)) {
+        if (u.getRoles().contains(Role.ROLE_CLIENT_AUTHOR)) {
             u.setMakerStatus(User.MakerStatus.NEUTRAL);
         }
-        if(u.getRoles().contains(Role.ROLE_CLIENT_MAKER)) {
+        if (u.getRoles().contains(Role.ROLE_CLIENT_MAKER) && userDataUpdate.getMakerStatus() != null) {
             u.setMakerStatus(userDataUpdate.getMakerStatus());
         }
-        u.setEmail(userDataUpdate.getEmail());
 
-        userPersonalData.setFirstName(userDataUpdate.getFirstName());
-        userPersonalData.setLastName(userDataUpdate.getLastName());
-        userPersonalData.setPhone(userDataUpdate.getPhone());
-        userPersonalData.setBirthDate(userDataUpdate.getBirthDate());
-
-        userAddress.setCity(userDataUpdate.getCity());
-        userAddress.setState(userDataUpdate.getState());
-        userAddress.setCountry(userDataUpdate.getCountry());
-        userAddress.setZipCode(userDataUpdate.getZipCode());
+        if (userDataUpdate.getEmail() != null)
+            u.setEmail(userDataUpdate.getEmail());
+        if (userDataUpdate.getFirstName() != null)
+            userPersonalData.setFirstName(userDataUpdate.getFirstName());
+        if (userDataUpdate.getLastName() != null)
+            userPersonalData.setLastName(userDataUpdate.getLastName());
+        if (userDataUpdate.getPhone() != null)
+            userPersonalData.setPhone(userDataUpdate.getPhone());
+        if (userDataUpdate.getBirthDate() != null)
+            userPersonalData.setBirthDate(userDataUpdate.getBirthDate());
+        if (userDataUpdate.getCity() != null)
+            userAddress.setCity(userDataUpdate.getCity());
+        if (userDataUpdate.getState() != null)
+            userAddress.setState(userDataUpdate.getState());
+        if (userDataUpdate.getCountry() != null)
+            userAddress.setCountry(userDataUpdate.getCountry());
+//        if (userDataUpdate.getZipCode() != null)
+//            userAddress.setZipCode(userDataUpdate.getZipCode());
 
         userRepository.save(u);
         return u;
@@ -148,10 +160,11 @@ public class UserService {
 
     public ResponseEntity<?> isInUse(String username, String email) {
         if (userRepository.findByEmail(email) != null || userRepository.findByUsername(username) != null) {
-            return new ResponseEntity<>("Email or username is taken", HttpStatus.CONFLICT);
+            return new ResponseEntity<>("Email or/and username are taken.", HttpStatus.CONFLICT);
         }
         return ResponseEntity.ok().build();
     }
+
 
     public String refresh(String uname) {
         User u = userRepository.findByUsername((uname));
