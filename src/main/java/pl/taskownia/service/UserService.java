@@ -1,6 +1,8 @@
 package pl.taskownia.service;
 
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,16 +11,19 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import pl.taskownia.data.UserDataUpdate;
 import pl.taskownia.event.OnRegistrationEvent;
 import pl.taskownia.model.*;
 import pl.taskownia.repository.AccountConfirmationTokenRepository;
 import pl.taskownia.repository.UserRepository;
 import pl.taskownia.security.JwtTokenProvider;
+import pl.taskownia.utils.FileUploadUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -189,6 +194,22 @@ public class UserService {
 
         userRepository.save(u);
         return u;
+    }
+
+    public ResponseEntity<?> uploadImage(HttpServletRequest request, MultipartFile multipartFile) {
+        User u = userRepository.findByUsername(jwtTokenProvider.getLogin(jwtTokenProvider.resolveToken(request)));
+
+        String fileExtension = FilenameUtils.getExtension(multipartFile.getOriginalFilename());
+        String newFilename = UUID.randomUUID().toString()+'.'+fileExtension;
+
+        u.getImage().setImage_path(newFilename); //TODO: verify
+        userRepository.save(u);
+        if(FileUploadUtil.uploadFile(newFilename, multipartFile)) {
+            return ResponseEntity.ok("Image uploaded");
+        } else {
+            return new ResponseEntity<>("Upload failed!", HttpStatus.CONFLICT);
+        }
+
     }
 
     public ResponseEntity<?> isInUse(String username, String email) {

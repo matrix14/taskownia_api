@@ -3,12 +3,31 @@ package pl.taskownia.serializer;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.springframework.beans.factory.annotation.Value;
 import pl.taskownia.model.Role;
 import pl.taskownia.model.User;
+import pl.taskownia.utils.FileUploadUtil;
 
 import java.io.IOException;
 
 public class UserSerializer extends StdSerializer<User> {
+    private static String fileUploadsPath;
+    private static String httpType;
+    private static String serverAddress;
+
+    @Value("${app.file-uploads-path}")
+    public void setFileUploadsPath(String fileUploadTemp) {
+        UserSerializer.fileUploadsPath = fileUploadTemp;
+    }
+    @Value("${app.http}")
+    public void setHttpType(String httpTypeTemp) {
+        UserSerializer.httpType = httpTypeTemp;
+    }
+    @Value("${app.address}")
+    public void setServerAddress(String serverAddressTemp) {
+        UserSerializer.serverAddress = serverAddressTemp;
+    }
+
     public UserSerializer(Class<User> t) {
         super(t);
     }
@@ -34,7 +53,10 @@ public class UserSerializer extends StdSerializer<User> {
         jsonGenerator.writeStringField("state", user.getAddress().getState());
         jsonGenerator.writeStringField("country", user.getAddress().getCountry());
         //jsonGenerator.writeStringField("zipCode", user.getAddress().getZipCode());
-        jsonGenerator.writeStringField("image", user.getImage().getImage_path());
+        if(user.getImage().getImage_path()!=null)
+            jsonGenerator.writeStringField("image", httpType+"://"+serverAddress+'/'+fileUploadsPath+'/'+user.getImage().getImage_path());
+        else
+            jsonGenerator.writeStringField("image", user.getImage().getImage_path());
         if(user.getRoles().get(0).equals(Role.ROLE_CLIENT_AUTHOR))
             jsonGenerator.writeObjectField("projectsAuthor", user.getProjectsAuthor());
         if(user.getRoles().get(0).equals(Role.ROLE_CLIENT_MAKER))

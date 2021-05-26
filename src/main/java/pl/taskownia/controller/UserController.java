@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import pl.taskownia.data.UserDataUpdate;
 import pl.taskownia.model.User;
 import pl.taskownia.service.UserService;
@@ -85,6 +86,11 @@ public class UserController {
     @PostMapping("/update-data")
     public User updateData(HttpServletRequest r, @RequestBody UserDataUpdate userDataUpdate) {
         return userService.updateData(r, userDataUpdate); //FIXME zrobic
+    }
+
+    @PostMapping("/upload-image")
+    public ResponseEntity<?> uploadImage(HttpServletRequest r, @RequestParam("image") MultipartFile multipartFile){
+        return userService.uploadImage(r, multipartFile);
     }
 
     @PostMapping("/inuse")

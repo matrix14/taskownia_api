@@ -1,6 +1,7 @@
 package pl.taskownia.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,11 +12,21 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import pl.taskownia.configuration.MvcConfig;
 
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    @Value("${app.file-uploads-path}")
+    private String fileUploadTemp;
+
+    private static String fileUploadsPath;
+
+    @Value("${app.file-uploads-path}")
+    public void setFileUploadsPath(String fileUploadTemp) {
+        SecurityConfig.fileUploadsPath = fileUploadTemp;
+    }
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
@@ -33,6 +44,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/user/register").permitAll()
                 .antMatchers("/user/inuse").permitAll()
                 .antMatchers("/user/registration-confirm").permitAll()
+                .antMatchers("/"+fileUploadsPath+"/**").permitAll()
                 .antMatchers("/chat/get-last").permitAll()
                 // Disallow everything else..
                 .anyRequest().authenticated();
