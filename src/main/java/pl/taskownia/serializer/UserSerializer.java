@@ -39,6 +39,7 @@ public class UserSerializer extends StdSerializer<User> {
             jsonGenerator.writeObjectField("projectsAuthor", user.getProjectsAuthor());
         if(user.getRoles().get(0).equals(Role.ROLE_CLIENT_MAKER))
             jsonGenerator.writeObjectField("projectsMaker", user.getProjectsMaker());
+        jsonGenerator.writeObjectField("enabled", user.getEnabled());
         jsonGenerator.writeObjectField("createdAt", user.getCreated_at());
         jsonGenerator.writeObjectField("updatedAt", user.getUpdated_at());
         jsonGenerator.writeEndObject();

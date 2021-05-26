@@ -68,6 +68,10 @@ public class UserController {
         return userService.getOtherUserDataByUsername(username);
     }
 
+    @GetMapping("/registration-confirm")
+    public ResponseEntity<?> confirmRegistration(@RequestParam String token) {
+        return userService.confirmRegistration(token);
+    }
     /*
     request.data[]
     name, email, first_name, last_name, phone, birth_date, city, state, country, zip_code

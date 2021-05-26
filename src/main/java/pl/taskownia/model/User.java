@@ -56,6 +56,8 @@ public class User {
 //            inverseJoinColumns = @JoinColumn(name = "project_id"))
 //    private List<Project> projectInterests = new ArrayList<>();
     @Column(nullable = false)
+    private Boolean enabled;
+    @Column(nullable = false)
     @Temporal(value= TemporalType.TIMESTAMP)
     private Date createdAt;
     @Column(nullable = false)
@@ -191,6 +193,15 @@ public class User {
 //    public void setProjectInterests(List<Project> projectInterests) {
 //        this.projectInterests = projectInterests;
 //    }
+
+
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+    }
 
     public Date getCreated_at() {
         return createdAt;

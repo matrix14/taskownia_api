@@ -1,6 +1,7 @@
 package pl.taskownia.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,10 +10,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.taskownia.data.UserDataUpdate;
-import pl.taskownia.model.Role;
-import pl.taskownia.model.User;
-import pl.taskownia.model.UserAddress;
-import pl.taskownia.model.UserPersonalData;
+import pl.taskownia.event.OnRegistrationEvent;
+import pl.taskownia.model.*;
+import pl.taskownia.repository.AccountConfirmationTokenRepository;
 import pl.taskownia.repository.UserRepository;
 import pl.taskownia.security.JwtTokenProvider;
 
@@ -27,6 +27,12 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
+    private AccountConfirmationTokenRepository accountConfirmationTokenRepository;
+
+    @Autowired
+    ApplicationEventPublisher applicationEventPublisher;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -37,9 +43,12 @@ public class UserService {
 
     public ResponseEntity<?> login(String uname, String pass) {
         try {
+            User u = userRepository.findByUsername(uname);
+            if(u.getEnabled()==false)
+                return new ResponseEntity<>("Account not enabled!", HttpStatus.NOT_ACCEPTABLE); //FIXME KORBAS USTAW LEPSZY KOD
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(uname, pass));
-            String token = jwtTokenProvider.createToken(userRepository.findByUsername(uname).getId(),
-                    uname, userRepository.findByUsername((uname)).getRoles());
+            String token = jwtTokenProvider.createToken(u.getId(),
+                    uname, u.getRoles());
             return ResponseEntity.ok(token);
         } catch (AuthenticationException ex) {
             return new ResponseEntity<>("Invalid login or password!", HttpStatus.CONFLICT);
@@ -56,12 +65,36 @@ public class UserService {
         if (!userRepository.existsByUsername(u.getUsername())) {
             u.setPassword(passwordEncoder.encode(u.getPassword()));
             u.setMakerStatus(User.MakerStatus.NEUTRAL);
+            u.setEnabled(false);
             u.setCreated_at(new Date(System.currentTimeMillis()));
             u.setUpdated_at(new Date(System.currentTimeMillis()));
             userRepository.save(u);
-            return ResponseEntity.ok(jwtTokenProvider.createToken(u.getId(), u.getUsername(), u.getRoles()));
+            applicationEventPublisher.publishEvent(new OnRegistrationEvent(u));
+            //return new ResponseEntity(jwtTokenProvider.createToken(u.getId(), u.getUsername(), u.getRoles()), HttpStatus.CREATED);
+            return new ResponseEntity("Account created, confirm email address", HttpStatus.CREATED);
         } else {
+            //TODO if acc is not enabled, then register success
             return new ResponseEntity("Username is taken", HttpStatus.CONFLICT);
+        }
+    }
+
+    public ResponseEntity<?> confirmRegistration(String token) {
+        try {
+            AccountConfirmationToken act = accountConfirmationTokenRepository.findByToken(token);
+            if (act == null)
+                return new ResponseEntity<>("Nie odnaleziono tokenu!", HttpStatus.CONFLICT);
+            if(act.getUser().getEnabled())
+                return new ResponseEntity<>("Uzytkownik już aktywowany!", HttpStatus.CONFLICT);
+            Date actualDate = new Date(System.currentTimeMillis());
+            if (actualDate.after(act.getExpiry()))
+                return new ResponseEntity<>("Token przedawniony!", HttpStatus.CONFLICT);
+            act.getUser().setEnabled(true);
+            accountConfirmationTokenRepository.save(act);
+            return ResponseEntity.ok("Pomyślnie aktywowano konto, proszę sie zalogować!");
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Cos poszlo zle", HttpStatus.BAD_REQUEST); //FIXME KORBAS KODZIK
         }
     }
 
@@ -169,5 +202,10 @@ public class UserService {
     public String refresh(String uname) {
         User u = userRepository.findByUsername((uname));
         return jwtTokenProvider.createToken(u.getId(), u.getUsername(), u.getRoles());
+    }
+
+    public void createConfirmationToken(User user, String token) {
+        AccountConfirmationToken myToken = new AccountConfirmationToken(user, token);
+        accountConfirmationTokenRepository.save(myToken);
     }
 }
